@@ -16,6 +16,7 @@ class FlySimulator:
         self.birdSpeed=0
         self.tubes=[]
 
+        self.frameCount=0
         self.isDead=False
 
     def reset(self):
@@ -63,8 +64,12 @@ class FlySimulator:
     def getState(self):
         return [self.isDead,self.birdPos,self.tubes,self.birdSpeed]
 
+    def getLiveTime(self):
+        return self.frameCount
+
     def perform(self,fly):
         if self.isDead!=True:
+            self.frameCount+=1
             self.updateBird(fly)
             self.updateTube()
             self.isHit()

@@ -12,11 +12,11 @@ input_state=tf.placeholder(tf.float32,[None,1+1+3*3])
 #[flyActionValue,notFlyActionValue]
 input_value=tf.placeholder(tf.float32,[None])
 
-weight1 = tf.Variable(tf.truncated_normal([1+1+3*3,32], stddev=0.1))
-bias1 = tf.Variable(tf.zeros([32]))
+weight1 = tf.Variable(tf.truncated_normal([1+1+3*3,64], stddev=0.1))
+bias1 = tf.Variable(tf.zeros([64]))
 output1=tf.nn.relu(tf.matmul(input_state,weight1)+bias1)
 
-weight2 = tf.Variable(tf.truncated_normal([32,64], stddev=0.1))
+weight2 = tf.Variable(tf.truncated_normal([64,64], stddev=0.1))
 bias2 = tf.Variable(tf.zeros([64]))
 output2=tf.nn.relu(tf.matmul(output1,weight2)+bias2)
 
@@ -24,11 +24,11 @@ weight3 = tf.Variable(tf.truncated_normal([64,64], stddev=0.1))
 bias3 = tf.Variable(tf.zeros([64]))
 output3=tf.nn.relu(tf.matmul(output2,weight3)+bias3)
 
-weight4 = tf.Variable(tf.truncated_normal([64,32], stddev=0.1))
-bias4 = tf.Variable(tf.zeros([32]))
+weight4 = tf.Variable(tf.truncated_normal([64,64], stddev=0.1))
+bias4 = tf.Variable(tf.zeros([64]))
 output4=tf.nn.relu(tf.matmul(output3,weight4)+bias4)
 
-weight5 = tf.Variable(tf.truncated_normal([32,2], stddev=0.1))
+weight5 = tf.Variable(tf.truncated_normal([64,2], stddev=0.1))
 bias5 = tf.Variable(tf.zeros([2]))
 output5=tf.nn.relu(tf.matmul(output4,weight5)+bias5)
 
@@ -40,7 +40,7 @@ output_value=tf.reduce_sum(tf.multiply(value_array,input_action),axis=1)
 diff_vector=input_value-output_value
 
 loss=tf.reduce_mean(tf.square(diff_vector))
-train_op=tf.train.AdamOptimizer(0.0001).minimize(loss)
+train_op=tf.train.AdamOptimizer(0.0005).minimize(loss)
 
 initer=tf.global_variables_initializer()
 saver=tf.train.Saver()
@@ -94,15 +94,15 @@ def makeDecision(value):
     return False
 
 def makeGreedyDecision(value,rate):
-    if random.randint(0,1000)>1000*rate:
+    if random.uniform(0,1)>rate:
         return makeDecision(value)
-    if random.randint(0,100)>50:
+    if random.uniform(0,1)>0.9:
         return True
     else:
         return False
 
 deadDataList=[]
-maxDeadListLen=256
+maxDeadListLen=1024
 numOfDeadDataAddEachIter=5
 def updateDeadList(data):
     if len(deadDataList)<maxDeadListLen:
@@ -132,7 +132,15 @@ def getTrainData(sess,actions,rawOldStates,rawNewStates):
         if rawNewStates[index][0]==True:
             updateDeadList([actions[index],rawNewStates[index],rawOldStates[index]])
 
-    for i in range(50):
+    for index in range(len(rawOldStates)):
+        if actions[index][0]==1:
+            _actions.append(actions[index])
+            _rawNewStates.append(rawNewStates[index])
+            _rawOldStates.append(rawOldStates[index])
+        if len(_actions)>5:
+            break
+
+    for i in range(40):
         index=random.randint(0,len(actions)-1)
         _actions.append(actions[index])
         _rawNewStates.append(rawNewStates[index])
@@ -143,13 +151,13 @@ def getTrainData(sess,actions,rawOldStates,rawNewStates):
     for state in _rawNewStates:
         newStates.append(translateState(state))
         if state[0]==True:
-            rewards.append(0)
+            rewards.append(0.0)
         else:
-            rewards.append(1)
+            rewards.append(1.0)
     for state in _rawOldStates:
         oldStates.append(translateState(state))
 
-    values=np.max(getValues(sess,newStates),axis=1)*0.9+rewards
+    values=np.max(getValues(sess,newStates),axis=1)*0.99+rewards
 
     for i in range(len(values)):
         if rewards[i]==0:
@@ -179,12 +187,16 @@ def setPath(path):
     global savePath
     savePath=path
 
+lastPlayCount=50
+greedyFactor=0.1
 def playForTrainData(sess,flySimu):
+    global lastPlayCount,greedyFactor
     actions=[]
     rawOldStates=[]
     rawNewStates=[]
 
     playCount=0
+    liveCount=0
     clickCount=1
     while True:
         if len(actions)>=1000:
@@ -197,7 +209,8 @@ def playForTrainData(sess,flySimu):
         flySimu.reset()
         while True:
             oldState=flySimu.getState()
-            dec=makeGreedyDecision(getValues(sess,[translateState(oldState)]),0.05)
+            dec=makeGreedyDecision(
+                getValues(sess,[translateState(oldState)]),greedyFactor)
             if dec==True:
                 action=[1,0]
                 clickCount+=1
@@ -210,6 +223,7 @@ def playForTrainData(sess,flySimu):
             tempOldStates.append(copy.deepcopy(oldState))
 
             if newState[0]==True or len(tempActions)>=5000:
+                liveCount+=flySimu.getLiveTime()
                 if len(tempActions)>50:
                     actions+=tempActions[-50:]
                     rawOldStates+=tempOldStates[-50:]
@@ -219,7 +233,14 @@ def playForTrainData(sess,flySimu):
                     rawOldStates+=tempOldStates
                     rawNewStates+=tempNewStates
                 break
-    print("playCount:"+str(playCount)+" clickCount:"+str(clickCount)+" per:"+str(clickCount/playCount))
+
+    greedyFactor=(200-liveCount/playCount)*0.001
+    if greedyFactor<0.01:
+        greedyFactor=0.01
+
+    lastPlayCount=playCount
+    print("playCount:"+str(playCount)+" perLiveTime:"+str(int(liveCount/playCount))+
+          " perClick:"+str(int(clickCount/playCount))+" greedyFactor:"+str(greedyFactor))
     return getTrainData(sess,actions,rawOldStates,rawNewStates)
 
 def trainThreadFun(graph):
