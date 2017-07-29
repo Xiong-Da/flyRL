@@ -82,6 +82,7 @@ class FlyWindow(QMainWindow):
 
         self.playAction=QAction("play",self)
         self.trainAction=QAction("train",self)
+        self.trainMoudleAction=QAction("trainMoudle",self)
         self.saveAction=QAction("save",self)
         self.selectAction=QAction("select",self)
         self.showAction=QAction("show",self)
@@ -103,6 +104,7 @@ class FlyWindow(QMainWindow):
         optionMenu=menubar.addMenu("options")
         optionMenu.addAction(self.playAction)
         optionMenu.addAction(self.trainAction)
+        optionMenu.addAction(self.trainMoudleAction)
         optionMenu.addAction(self.saveAction)
         optionMenu.addAction(self.selectAction)
         optionMenu.addAction(self.showAction)
@@ -112,6 +114,7 @@ class FlyWindow(QMainWindow):
     def initAction(self):
         self.playAction.triggered.connect(self.onPlay)
         self.trainAction.triggered.connect(self.onTrain)
+        self.trainMoudleAction.triggered.connect(self.onTrainMoudle)
         self.saveAction.triggered.connect(self.onSave)
         self.selectAction.triggered.connect(self.onSelect)
         self.showAction.triggered.connect(self.onShow)
@@ -128,6 +131,16 @@ class FlyWindow(QMainWindow):
     def onTrain(self):
         agent.startTrain()
 
+    def getMoudlePath(self):
+        path = QFileDialog.getOpenFileName(self, "select")[0]
+        if len(path) == 0: return
+        path = os.path.splitext(path)[0]
+        print(path)
+        return path
+
+    def onTrainMoudle(self):
+        agent.startTrainExistMoudle(self.getMoudlePath())
+
     def onSave(self):
         path = QFileDialog.getSaveFileName(self, "save path")[0]
         if len(path) == 0: return
@@ -135,11 +148,7 @@ class FlyWindow(QMainWindow):
         agent.setPath(path)
 
     def onSelect(self):
-        path = QFileDialog.getOpenFileName(self, "select")[0]
-        if len(path) == 0: return
-        path = os.path.splitext(path)[0]
-        print(path)
-        agent.selectModule(path)
+        agent.selectModule(self.getMoudlePath())
 
     def onShow(self):
         self.isPlay=False

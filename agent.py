@@ -32,7 +32,7 @@ output_value=tf.reduce_sum(tf.multiply(value_array,input_action),axis=1)
 diff_vector=input_value-output_value
 
 loss=tf.reduce_mean(tf.square(diff_vector))
-train_op=tf.train.AdamOptimizer(0.00005).minimize(loss)
+train_op=tf.train.AdamOptimizer(0.00002).minimize(loss)
 
 initer=tf.global_variables_initializer()
 saver=tf.train.Saver()
@@ -156,14 +156,17 @@ message=""
 def getMessage():
     return message
 
-def startTrain():
+def startTrainExistMoudle(path):
     global isStarted
-    if isStarted==True:
+    if isStarted == True:
         return
-    isStarted=True
-    thread = threading.Thread(target=trainThreadFun, args=[tf.get_default_graph()])
+    isStarted = True
+    thread = threading.Thread(target=trainThreadFun, args=[tf.get_default_graph(),path])
     thread.setDaemon(True)
     thread.start()
+
+def startTrain():
+    startTrainExistMoudle(None)
 
 def setPath(path):
     global savePath
@@ -215,11 +218,14 @@ def playForTrainData(sess,flySimu):
 
     updatePlayDataList(sess,actions,rawOldStates,rawNewStates)
 
-def trainThreadFun(graph):
+def trainThreadFun(graph,path):
     global message,savePath,isStarted
 
     sess = tf.Session(graph=graph)
     sess.run([initer])
+
+    if path!=None:
+        saver.restore(sess=sess, save_path=path)
 
     flySimu=simulator.FlySimulator()
 
