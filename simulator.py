@@ -1,4 +1,5 @@
 import random
+import copy
 
 hitBoxLength=10
 sceneSize=(400,800)
@@ -62,7 +63,7 @@ class FlySimulator:
                 return
 
     def getState(self):
-        return [self.isDead,self.birdPos,self.tubes,self.birdSpeed]
+        return copy.deepcopy([self.isDead,self.birdPos,self.tubes,self.birdSpeed])
 
     def getLiveTime(self):
         return self.frameCount

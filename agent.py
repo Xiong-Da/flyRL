@@ -40,7 +40,7 @@ saver=tf.train.Saver()
 ##############################################################
 
 def addTubeData(data,birdPos,tube):
-    data.append(tube[0]-birdPos[0])
+    data.append(tube[0])
     data.append(tube[1])
     data.append(tube[2]-tube[1])
 
@@ -60,11 +60,11 @@ def translateState(rawSate):
     maxTubeGap=simulator.sceneSize[0]
     if closestTube==None:
         return [rawSate[3],rawSate[1][1],
-                -100,0,maxTubeGap,100,0,maxTubeGap,200,0,maxTubeGap]
+                birdPos[0]-100,0,maxTubeGap,birdPos[0]+100,0,maxTubeGap,birdPos[0]+200,0,maxTubeGap]
 
     index=tubes.index(closestTube)
     if index==0:
-        retList.append(-100)
+        retList.append(birdPos[0]-100)
         retList.append(0)
         retList.append(maxTubeGap)
     else:
@@ -197,9 +197,9 @@ def playForTrainData(sess,flySimu):
                 action=[0,1]
             newState=flySimu.perform(dec)
 
-            actions.append(copy.deepcopy(action))
-            rawNewStates.append(copy.deepcopy(newState))
-            rawOldStates.append(copy.deepcopy(oldState))
+            actions.append(action)
+            rawNewStates.append(newState)
+            rawOldStates.append(oldState)
 
             if newState[0]==True:
                 liveCount+=flySimu.getLiveTime()
