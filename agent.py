@@ -56,15 +56,17 @@ def translateState(rawSate):
             continue
         closestTube=tube
         break
+
+    maxTubeGap=simulator.sceneSize[0]
     if closestTube==None:
         return [rawSate[3],rawSate[1][1],
-                -100,0,simulator.sceneSize[1],100,0,simulator.sceneSize[1],200,0,simulator.sceneSize[1]]
+                -100,0,maxTubeGap,100,0,maxTubeGap,200,0,maxTubeGap]
 
     index=tubes.index(closestTube)
     if index==0:
         retList.append(-100)
         retList.append(0)
-        retList.append(simulator.sceneSize[1])
+        retList.append(maxTubeGap)
     else:
         addTubeData(retList,birdPos,tubes[index-1])
     addTubeData(retList,birdPos,tubes[index])
