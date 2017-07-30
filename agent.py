@@ -32,7 +32,7 @@ output_value=tf.reduce_sum(tf.multiply(value_array,input_action),axis=1)
 diff_vector=input_value-output_value
 
 loss=tf.reduce_mean(tf.square(diff_vector))
-train_op=tf.train.AdamOptimizer(0.0005).minimize(loss)
+train_op=tf.train.AdamOptimizer(0.0001).minimize(loss)
 
 initer=tf.global_variables_initializer()
 saver=tf.train.Saver()
@@ -222,8 +222,8 @@ def playForTrainData(sess,flySimu):
                 break
 
     greedyFactor=(200-liveCount/playCount)*0.001
-    if greedyFactor<0.01:
-        greedyFactor=0.01
+    if greedyFactor<0.05:
+        greedyFactor=0.05
 
     lastPlayCount=playCount
     print("playCount:"+str(playCount)+" perLiveTime:"+str(int(liveCount/playCount))+
