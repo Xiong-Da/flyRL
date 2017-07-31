@@ -32,7 +32,7 @@ output_value=tf.reduce_sum(tf.multiply(value_array,input_action),axis=1)
 diff_vector=input_value-output_value
 
 loss=tf.reduce_mean(tf.square(diff_vector))
-train_op=tf.train.AdamOptimizer(0.0001).minimize(loss)
+train_op=tf.train.AdamOptimizer(0.00005).minimize(loss)
 
 initer=tf.global_variables_initializer()
 saver=tf.train.Saver()

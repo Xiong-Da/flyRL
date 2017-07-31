@@ -9,7 +9,8 @@ birdSpeedDescent=0.8
 tubeSpeed=3
 
 minTubeInterval=100
-minTubeGap=60
+minTubeGap=80
+maxTubeGap=120
 
 class FlySimulator:
     def __init__(self):
@@ -36,8 +37,8 @@ class FlySimulator:
         if random.randint(0,100)>5:
             return
 
-        length1=random.randint(0,sceneSize[0]-2*minTubeGap)
-        gap=random.randint(minTubeGap,2*minTubeGap)
+        length1=random.randint(0,sceneSize[0]-maxTubeGap)
+        gap=random.randint(minTubeGap,maxTubeGap)
 
         if (sceneSize[0]-length1-gap)<0:
             return
